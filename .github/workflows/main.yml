@@ -1,0 +1,19 @@
+name: Price Loader
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # כל שעה
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install requests psycopg2-binary
+      - run: python price_loader.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
