@@ -6,11 +6,6 @@ from datetime import datetime
 import psycopg2
 import os
 
-PRICE_FEEDS = [
-    {
-        "chain": "shufersal",
-        "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1"
-    },
 FEEDS = [
     {
         "chain": "Shufersal", 
@@ -25,7 +20,6 @@ FEEDS = [
         "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
     }
 ]
-
 def download_and_extract(url):
     print(f"Downloading from {feed['chain']}...")
     r = requests.get(feed["url"], timeout=60)
