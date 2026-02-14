@@ -12,7 +12,6 @@ FEEDS = [
         "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
     }
 ]
-
 def download_and_extract(url):
     try:
         print(f"Downloading from {url}...")
