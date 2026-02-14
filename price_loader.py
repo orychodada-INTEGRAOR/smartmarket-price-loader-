@@ -12,15 +12,11 @@ FEEDS = [
 
 def load_to_db(rows, chain):
     try:
-        url = os.getenv("DATABASE_URL")
-        print(f"Connecting to DB... (URL starts with: {url[:20]}...)")
-        conn = psycopg2.connect(url)
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
         cur = conn.cursor()
-        
-        print(f"Deleting old data for {chain}...")
         cur.execute("DELETE FROM store_prices WHERE chain = %s", (chain,))
         
-        print(f"Inserting {len(rows)} items...")
+        print(f"--- DATABASE: Inserting {len(rows)} items for {chain} ---")
         for row in rows:
             item_code = row.get("ItemCode") or row.get("itemcode")
             price = row.get("ItemPrice") or row.get("itemprice")
@@ -29,17 +25,19 @@ def load_to_db(rows, chain):
                     "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
                     (chain, item_code, float(price))
                 )
-        
         conn.commit()
-        print(f"!!! SUCCESS: {chain} LOADED !!!")
         cur.close()
         conn.close()
+        print(f"!!! SUCCESS: {chain} is in the Database !!!")
     except Exception as e:
-        print(f"!!! DATABASE ERROR: {e} !!!")
+        print(f"!!! DB ERROR: {e} !!!")
 
 def download_and_extract(url):
     try:
-        r = requests.get(url, timeout=60)
+        # הוספת Headers כדי שלא יחסמו אותנו
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        r = requests.get(url, timeout=30, headers=headers)
+        r.raise_for_status()
         content = r.content
         if url.endswith('.gz') or content.startswith(b'\x1f\x8b'):
             with gzip.GzipFile(fileobj=io.BytesIO(content)) as f:
@@ -48,11 +46,14 @@ def download_and_extract(url):
         items = root.findall(".//Item") or root.findall(".//Product")
         return [{child.tag: child.text for child in item} for item in items]
     except Exception as e:
-        print(f"Download Error: {e}")
+        print(f"Download Error for {url}: {e}")
         return None
 
 if __name__ == "__main__":
+    # בדיקת דופק לצינור - תמיד נכניס פריט אחד לפחות כדי לראות שה-DB עובד
+    load_to_db([{"ItemCode": "000", "ItemPrice": "0.0"}], "TEST_CONNECTION")
+    
     for feed in FEEDS:
         data = download_and_extract(feed['url'])
         if data:
-            load_to_db(data, feed['chain'])
+            load_to_db(data, feed['chain'])['chain'])
