@@ -35,30 +35,27 @@ def download_and_parse(feed):
 
 def load_to_db(rows, chain):
     if not rows:
-        print(f"No rows found for {chain}")
         return
-    
-    # השורה הזו היא ה"פנס" שלנו - היא תדפיס ביומן את כל שמות העמודות
-    print(f"DEBUG: Columns in {chain} are: {list(rows[0].keys())}")
     
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
     
     for row in rows:
-        # ניסיון למצוא את הקוד והמחיר בכל וריאציה אפשרית
-        barcode = row.get("ItemCode") or row.get("itemcode") or row.get("Item_Code") or row.get("Item_code")
-        price = row.get("ItemPrice") or row.get("itemprice") or row.get("Item_Price")
+        # שליפת הנתונים לפי השמות שגילינו ב-DEBUG
+        item_code = row.get("ItemCode") or row.get("itemcode")
+        price = row.get("ItemPrice") or row.get("itemprice")
         
-        if barcode and price:
+        if item_code and price:
             try:
+                # הכנסה ישירה לטבלת store_prices שבנינו ב-Neon
                 cur.execute(
                     "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
-                    (chain, barcode, float(price))
+                    (chain, item_code, float(price))
                 )
-            except Exception as e:
-                continue # מדלג על שגיאות בודדות בתוך הלופ
+            except:
+                continue
                 
     conn.commit()
     cur.close()
     conn.close()
-    print(f"Successfully loaded data for {chain}")
+    print(f"Successfully loaded {len(rows)} items for {chain}")
