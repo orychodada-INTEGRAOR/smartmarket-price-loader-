@@ -9,7 +9,7 @@ import os
 PRICE_FEEDS = [
     {
         "chain": "shufersal",
-        "url": "URL_אמיתי_של_שופרסל"
+        https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1
     },
     {
         "chain": "rami_levy",
