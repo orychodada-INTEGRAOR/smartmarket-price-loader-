@@ -5,23 +5,24 @@ import psycopg2
 import gzip
 import io
 
-# רשימת הכתובות המעודכנת
+# רשימת ה-Feeds המעודכנת לכל הרשתות המרכזיות
 FEEDS = [
     {"chain": "Yohananof", "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602141300.gz"},
-    {"chain": "Victory", "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"}
+    {"chain": "Victory", "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"},
+    {"chain": "RamiLevy", "url": "https://url.retail.prices.pali.co.il/FileObject/UpdateCategory?catID=2&warehouseId=341"},
+    {"chain": "Shufersal", "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=336"},
+    {"chain": "StopMarket", "url": "https://url.retail.prices.pali.co.il/FileObject/UpdateCategory?catID=2&warehouseId=1"}
 ]
 
 def load_to_db(rows, chain):
     try:
         db_url = os.getenv("DATABASE_URL")
-        if not db_url:
-            print("!!! ERROR: DATABASE_URL is missing in GitHub Secrets !!!")
-            return
+        if not db_url: return
             
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
-        # יצירת הטבלה אם היא לא קיימת למקרה שמשהו נמחק
+        # וידוא קיום טבלה
         cur.execute("""
             CREATE TABLE IF NOT EXISTS store_prices (
                 id SERIAL PRIMARY KEY,
@@ -32,9 +33,10 @@ def load_to_db(rows, chain):
             )
         """)
         
+        # ניקוי נתונים ישנים של אותה רשת לפני טעינה חדשה
         cur.execute("DELETE FROM store_prices WHERE chain = %s", (chain,))
         
-        print(f"--- DATABASE: Inserting {len(rows)} items for {chain} ---")
+        print(f"--- DB: Inserting {len(rows)} items for {chain} ---")
         for row in rows:
             item_code = row.get("ItemCode") or row.get("itemcode")
             price = row.get("ItemPrice") or row.get("itemprice")
@@ -44,39 +46,42 @@ def load_to_db(rows, chain):
                         "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
                         (chain, item_code, float(price))
                     )
-                except:
-                    continue
+                except: continue
         
         conn.commit()
         cur.close()
         conn.close()
-        print(f"!!! SUCCESS: {chain} is in the Database !!!")
+        print(f"!!! SUCCESS: {chain} Sync Complete !!!")
     except Exception as e:
-        print(f"!!! DB ERROR: {e} !!!")
+        print(f"!!! DB ERROR for {chain}: {e} !!!")
 
 def download_and_extract(url):
     try:
+        # התחזות לדפדפן כדי למנוע חסימות
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        r = requests.get(url, timeout=30, headers=headers)
+        r = requests.get(url, timeout=45, headers=headers)
         r.raise_for_status()
+        
         content = r.content
+        # בדיקה אם הקובץ דחוס (GZIP)
         if url.endswith('.gz') or content.startswith(b'\x1f\x8b'):
             with gzip.GzipFile(fileobj=io.BytesIO(content)) as f:
                 content = f.read()
+                
         root = ET.fromstring(content)
         items = root.findall(".//Item") or root.findall(".//Product")
         return [{child.tag: child.text for child in item} for item in items]
     except Exception as e:
-        print(f"Download Error for {url}: {e}")
+        print(f"Skipping {url}: {e}")
         return None
 
 if __name__ == "__main__":
-    # בדיקת דופק חובה - תמיד נכניס שורה אחת כדי לוודא שהצינור ל-Neon פתוח
-    load_to_db([{"ItemCode": "999", "ItemPrice": "1.0"}], "SMART_MARKET_TEST")
+    # בדיקת דופק מערכתית
+    load_to_db([{"ItemCode": "777", "ItemPrice": "7.77"}], "SYSTEM_CHECK")
     
     for feed in FEEDS:
         data = download_and_extract(feed['url'])
         if data:
             load_to_db(data, feed['chain'])
         else:
-            print(f"Skipping {feed['chain']} due to download error.")
+            print(f"Network error or block on {feed['chain']}. Moving to next.")
