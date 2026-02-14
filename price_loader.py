@@ -8,8 +8,8 @@ import os
 
 FEEDS = [
     {
-        "chain": "Shufersal", 
-        "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123"
+        "chain": "Shufersal_Deal", 
+        "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123" # תחליף בקישור שתשלח לי
     },
     {
         "chain": "Rami_Levy", 
@@ -18,14 +18,20 @@ FEEDS = [
     {
         "chain": "Yohananof", 
         "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
+    },
+    {
+        "chain": "Victory", 
+        "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"
+    },
+    {
+        "chain": "Hazi_Hinam", 
+        "url": "http://hazihinam.co.il/Main.aspx?id=1" # דורש טיפול ספציפי בהמשך
+    },
+    {
+        "chain": "Machsanei_Hashuk", 
+        "url": "https://www.shuk-m.co.il/Main.aspx?id=2"
     }
 ]
-def download_and_extract(url):
-    print(f"Downloading from {feed['chain']}...")
-    r = requests.get(feed["url"], timeout=60)
-    r.raise_for_status() # מוודא שההורדה הצליחה
-    
-    # בדיקה: האם הקובץ מכווץ ב-GZIP?
     if r.content.startswith(b'\x1f\x8b'):
         gz_buffer = BytesIO(r.content)
         with gzip.GzipFile(fileobj=gz_buffer) as gz:
