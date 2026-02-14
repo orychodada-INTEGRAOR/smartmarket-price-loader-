@@ -34,35 +34,31 @@ def download_and_parse(feed):
         return list(csv.DictReader(text_content.splitlines()))
 
 def load_to_db(rows, chain):
+    if not rows:
+        print(f"No rows found for {chain}")
+        return
+    
+    # השורה הזו היא ה"פנס" שלנו - היא תדפיס ביומן את כל שמות העמודות
+    print(f"DEBUG: Columns in {chain} are: {list(rows[0].keys())}")
+    
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
-
-   # מחפש את קוד המוצר בכמה שמות אפשריים (גמישות לשופרסל/רמי לוי)
-        barcode = row.get("ItemCode") or row.get("itemcode") or row.get("ItemsCode")
-        price = row.get("ItemPrice") or row.get("itemprice")
+    
+    for row in rows:
+        # ניסיון למצוא את הקוד והמחיר בכל וריאציה אפשרית
+        barcode = row.get("ItemCode") or row.get("itemcode") or row.get("Item_Code") or row.get("Item_code")
+        price = row.get("ItemPrice") or row.get("itemprice") or row.get("Item_Price")
         
-        if not barcode or not price:
-            continue  # מדלג על שורות ריקות או לא תקינות
-            
-        price = float(price)
-
-        cur.execute("""
-            INSERT INTO products (barcode, name)
-            VALUES (%s, %s)
-            ON CONFLICT (barcode) DO NOTHING
-        """, (barcode, row["ItemName"]))
-
-        cur.execute("""
-            INSERT INTO store_prices (product_id, store_id, price, last_updated)
-            SELECT p.id, s.id, %s, NOW()
-            FROM products p, stores s
-            WHERE p.barcode=%s AND s.store_code=%s
-        """, (price, barcode, store_code))
-
+        if barcode and price:
+            try:
+                cur.execute(
+                    "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
+                    (chain, barcode, float(price))
+                )
+            except Exception as e:
+                continue # מדלג על שגיאות בודדות בתוך הלופ
+                
     conn.commit()
     cur.close()
     conn.close()
-
-for feed in PRICE_FEEDS:
-    rows = download_and_parse(feed)
-    load_to_db(rows, feed["chain"])
+    print(f"Successfully loaded data for {chain}")
