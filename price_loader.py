@@ -40,14 +40,16 @@ def load_to_db(rows, chain):
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
     
+    # ניקוי נתונים ישנים של אותה רשת לפני טעינה חדשה (אופציונלי)
+    cur.execute("DELETE FROM store_prices WHERE chain = %s", (chain,))
+    
     for row in rows:
-        # שליפת הנתונים לפי השמות שגילינו ב-DEBUG
+        # שליפת הנתונים לפי השמות המדויקים משופרסל/רמי לוי
         item_code = row.get("ItemCode") or row.get("itemcode")
         price = row.get("ItemPrice") or row.get("itemprice")
         
         if item_code and price:
             try:
-                # הכנסה ישירה לטבלת store_prices שבנינו ב-Neon
                 cur.execute(
                     "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
                     (chain, item_code, float(price))
