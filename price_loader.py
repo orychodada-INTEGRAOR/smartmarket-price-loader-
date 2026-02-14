@@ -6,7 +6,7 @@ from datetime import datetime
 import psycopg2
 import os
 
-  PRICE_FEEDS = [
+PRICE_FEEDS = [
     {
         "chain": "shufersal",
         "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1"
