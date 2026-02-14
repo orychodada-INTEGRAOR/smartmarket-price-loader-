@@ -12,10 +12,8 @@ PRICE_FEEDS = [
         "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1"
     },
     {
-        "chain": "rami_levy",
-        "url": "https://www.rami-levy.co.il/price/price.txt"
-    }
-]
+{"chain": "Shufersal", "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123"},
+    {"chain": "Rami_Levy", "url": "https://url-to-rami-levy-prices.co.il/PriceFull-current.xml"}
 
 def download_and_parse(feed):
     print(f"Downloading from {feed['chain']}...")
