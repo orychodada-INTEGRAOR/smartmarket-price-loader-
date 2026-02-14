@@ -12,10 +12,20 @@ PRICE_FEEDS = [
         "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1"
     },
     {
-{"chain": "Shufersal", "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123"},
-    {"chain": "Rami_Levy", "url": "https://url-to-rami-levy-prices.co.il/PriceFull-current.xml"}
-
-def download_and_parse(feed):
+FEEDS = [
+    {
+        "chain": "Shufersal", 
+        "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123"
+    },
+    {
+        "chain": "Rami_Levy", 
+        "url": "https://url-to-rami-levy-prices.co.il/PriceFull-current.xml"
+    },
+    {
+        "chain": "Yohananof", 
+        "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
+    }
+]
     print(f"Downloading from {feed['chain']}...")
     r = requests.get(feed["url"], timeout=60)
     r.raise_for_status() # מוודא שההורדה הצליחה
