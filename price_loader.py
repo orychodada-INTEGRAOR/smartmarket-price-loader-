@@ -5,7 +5,7 @@ import psycopg2
 import gzip
 import io
 
-# רשימת כתובות - SmartMarket Data Source
+# רשימת הכתובות המעודכנת ל-14.02 - SmartMarket Live Data
 FEEDS = [
     {
         "chain": "Yohananof", 
@@ -16,10 +16,14 @@ FEEDS = [
         "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"
     }
 ]
+
+def download_and_extract(url):
     try:
-        print(f"Downloading from {url}...")
+        print(f"Connecting to {url}...")
         r = requests.get(url, timeout=60)
-        r.raise_for_status()
+        if r.status_code != 200:
+            print(f"Failed to connect. Status: {r.status_code}")
+            return None
         
         content = r.content
         if url.endswith('.gz') or content.startswith(b'\x1f\x8b'):
@@ -28,23 +32,19 @@ FEEDS = [
         
         root = ET.fromstring(content)
         items = root.findall(".//Item") or root.findall(".//Product")
+        print(f"Found {len(items)} items in XML.")
         return [{child.tag: child.text for child in item} for item in items]
     except Exception as e:
-        print(f"Error downloading: {e}")
+        print(f"Error: {e}")
         return None
 
 def load_to_db(rows, chain):
-    if not rows:
-        print(f"No rows found for {chain}")
-        return
-    
+    if not rows: return
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
-    
-    # ניקוי נתונים ישנים של אותה רשת
     cur.execute("DELETE FROM store_prices WHERE chain = %s", (chain,))
     
-    print(f"Loading {len(rows)} items into Neon...")
+    print(f"Inserting data for {chain} into Neon...")
     for row in rows:
         item_code = row.get("ItemCode") or row.get("itemcode")
         price = row.get("ItemPrice") or row.get("itemprice")
@@ -54,18 +54,14 @@ def load_to_db(rows, chain):
                     "INSERT INTO store_prices (chain, item_code, price) VALUES (%s, %s, %s)",
                     (chain, item_code, float(price))
                 )
-            except:
-                continue
-    
+            except: continue
     conn.commit()
     cur.close()
     conn.close()
-    print(f"Successfully loaded {chain}")
 
 if __name__ == "__main__":
     for feed in FEEDS:
         data = download_and_extract(feed['url'])
         if data:
             load_to_db(data, feed['chain'])
-        else:
-            print(f"Failed to get data for {feed['chain']}")
+            print(f"Finished {feed['chain']}")
