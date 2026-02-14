@@ -7,13 +7,12 @@ import io
 
 # רשימת כל הרשתות - SmartMarket Coverage
 FEEDS = [
-    {"chain": "Shufersal_Deal", "url": "http://prices.shufersal.co.il/FileObject/UpdateCategory?catID=2&warehouseId=123"},
-    {"chain": "Rami_Levy", "url": "https://url-to-rami-levy-prices.co.il/PriceFull-current.xml"},
-    {"chain": "Yohananof", "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"},
-    {"chain": "Victory", "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"},
-    {"chain": "Machsanei_Hashuk", "url": "https://www.shuk-m.co.il/Main.aspx?id=2"}
+ FEEDS = [
+    {
+        "chain": "Yohananof", 
+        "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
+    }
 ]
-
 def download_and_extract(url):
     try:
         response = requests.get(url, timeout=60)
