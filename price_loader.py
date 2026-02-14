@@ -6,15 +6,16 @@ from datetime import datetime
 import psycopg2
 import os
 
-PRICE_FEEDS = [
+  PRICE_FEEDS = [
     {
         "chain": "shufersal",
-        https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1
+        "url": "https://prices.shufersal.co.il/FileObject/UpdateCategory?catID=1"
     },
     {
         "chain": "rami_levy",
-        "url": "URL_אמיתי_של_רמי_לוי"
+        "url": "https://www.rami-levy.co.il/price/price.txt"
     }
+]
 ]
 
 def download_and_parse(feed):
