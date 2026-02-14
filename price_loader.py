@@ -37,10 +37,14 @@ def load_to_db(rows, chain):
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
 
-    for row in rows:
-        barcode = row["ItemCode"]
-        price = float(row["ItemPrice"])
-        store_code = row["StoreId"]
+   # מחפש את קוד המוצר בכמה שמות אפשריים (גמישות לשופרסל/רמי לוי)
+        barcode = row.get("ItemCode") or row.get("itemcode") or row.get("ItemsCode")
+        price = row.get("ItemPrice") or row.get("itemprice")
+        
+        if not barcode or not price:
+            continue  # מדלג על שורות ריקות או לא תקינות
+            
+        price = float(price)
 
         cur.execute("""
             INSERT INTO products (barcode, name)
