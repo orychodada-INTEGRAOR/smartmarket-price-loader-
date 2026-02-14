@@ -9,10 +9,13 @@ import io
 FEEDS = [
     {
         "chain": "Yohananof", 
-        "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
+        "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602141300.gz"
+    },
+    {
+        "chain": "Victory", 
+        "url": "https://matrixcatalog.co.il/NB_PublishPriceFull.aspx?id=1"
     }
 ]
-def download_and_extract(url):
     try:
         print(f"Downloading from {url}...")
         r = requests.get(url, timeout=60)
