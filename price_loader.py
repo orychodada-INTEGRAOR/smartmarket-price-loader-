@@ -18,12 +18,20 @@ PRICE_FEEDS = [
 ]
 
 def download_and_parse(feed):
+    print(f"Downloading from {feed['chain']}...")
     r = requests.get(feed["url"], timeout=60)
-    gz_buffer = BytesIO(r.content)
-    with gzip.GzipFile(fileobj=gz_buffer) as gz:
-        text_stream = TextIOWrapper(gz, encoding='utf-8')
-        reader = csv.DictReader(text_stream)
-        return list(reader)
+    r.raise_for_status() # מוודא שההורדה הצליחה
+    
+    # בדיקה: האם הקובץ מכווץ ב-GZIP?
+    if r.content.startswith(b'\x1f\x8b'):
+        gz_buffer = BytesIO(r.content)
+        with gzip.GzipFile(fileobj=gz_buffer) as gz:
+            text_stream = TextIOWrapper(gz, encoding='utf-8')
+            return list(csv.DictReader(text_stream))
+    else:
+        # אם זה טקסט רגיל
+        text_content = r.content.decode('utf-8')
+        return list(csv.DictReader(text_content.splitlines()))
 
 def load_to_db(rows, chain):
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
