@@ -7,7 +7,6 @@ import io
 
 # רשימת כל הרשתות - SmartMarket Coverage
 FEEDS = [
- FEEDS = [
     {
         "chain": "Yohananof", 
         "url": "https://publishedfiles.yohananof.co.il/PriceFull7290803800003-042-202602140700.gz"
