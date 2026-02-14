@@ -1,19 +1,27 @@
-name: Price Loader
+name: SmartMarket Auto Sync
 
 on:
   schedule:
-    - cron: "0 * * * *"  # כל שעה
-  workflow_dispatch:
+    # ירוץ כל לילה ב-3:00 UTC (שזה 5:00 בבוקר שעון ישראל)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # כפתור להרצה ידנית
 
 jobs:
-  run-script:
+  run-sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-      - run: pip install requests psycopg2-binary
-      - run: python price_loader.py
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests psycopg2-binary
+
+      - name: Execute Loader
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python price_loader.py
